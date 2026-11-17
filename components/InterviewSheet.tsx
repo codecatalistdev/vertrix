@@ -10,6 +10,7 @@ import { passEarlierSteps } from '@/lib/steps'
 import { formatZoneRange, inputToMinutes, interviewInstants, minutesToInput } from '@/lib/time'
 import type { InterviewView, Person, Status, StepId, StepResults } from '@/lib/types'
 import { useCurrentUser, useToast } from './AppShell'
+import { useDeskData } from './DeskData'
 import { IconClose } from './icons'
 
 export type Draft = {
@@ -32,6 +33,7 @@ export type Draft = {
   note: string
   resume: { originalName: string; size: number } | null
   createdByName?: string
+  freeProxyIds?: string[]
 }
 
 export function createDraft(input: {
@@ -97,6 +99,7 @@ export function InterviewSheet({
 }) {
   const user = useCurrentUser()
   const toast = useToast()
+  const { putInterview, dropInterview } = useDeskData()
   const router = useRouter()
   const canManage = canManageInterview(user.role)
   const [draft, setDraft] = useState(initial)
@@ -117,8 +120,9 @@ export function InterviewSheet({
         role: 'proxy',
       })
     }
-    return list
-  }, [people, draft.interviewerId, draft.interviewerName])
+    const free = new Set(draft.freeProxyIds ?? [])
+    return list.sort((a, b) => Number(free.has(b.id)) - Number(free.has(a.id)) || a.name.localeCompare(b.name))
+  }, [people, draft.interviewerId, draft.interviewerName, draft.freeProxyIds])
 
   const readout = useMemo(() => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(draft.date)) return null
@@ -169,6 +173,7 @@ export function InterviewSheet({
             method: 'POST',
             body: JSON.stringify(payload),
           })
+      putInterview(saved.interview)
       const id = saved.interview.id
       if (file) {
         const form = new FormData()
@@ -191,6 +196,7 @@ export function InterviewSheet({
     setError('')
     try {
       await api(`/api/interviews/${draft.id}`, { method: 'DELETE' })
+      dropInterview(draft.id)
       toast('Interview deleted')
       onSaved()
     } catch (caught) {
@@ -218,7 +224,7 @@ export function InterviewSheet({
       >
         <header className="sheet-head">
           <div>
-            <p className="eyebrow">{draft.id ? 'Interview' : 'New interview'}</p>
+            <p suppressHydrationWarning className="eyebrow">{draft.id ? 'Interview' : 'New interview'}</p>
             <h2 id="interview-title">{draft.id ? draft.candidateName || draft.title || 'Interview' : 'Assign interview'}</h2>
           </div>
           <button className="icon-btn" type="button" aria-label="Close" onClick={onClose}>
@@ -239,7 +245,7 @@ export function InterviewSheet({
             </button>
           ) : null}
           {error ? <div className="form-error" style={{ marginBottom: 14 }}>{error}</div> : null}
-          {draft.createdByName ? <p className="help" style={{ marginBottom: 14 }}>Scheduled by {draft.createdByName}</p> : null}
+          {draft.createdByName ? <p suppressHydrationWarning className="help" style={{ marginBottom: 14 }}>Scheduled by {draft.createdByName}</p> : null}
           <div className="form-grid">
             <label className="field span-2">
               <span className="field-label">Candidate name</span>
@@ -297,10 +303,17 @@ export function InterviewSheet({
                 <option value="">Select interviewer</option>
                 {options.map((person) => (
                   <option key={person.id} value={person.id}>
-                    {person.name}{person.email ? ` · ${person.email}` : ''}
+                    {person.name}{draft.freeProxyIds?.includes(person.id) ? ' · free' : ''}{person.email ? ` · ${person.email}` : ''}
                   </option>
                 ))}
               </select>
+              {canManage && !draft.id && draft.freeProxyIds ? (
+                <p suppressHydrationWarning className="help">
+                  {draft.freeProxyIds.length > 0
+                    ? `Free for this time: ${options.filter((person) => draft.freeProxyIds?.includes(person.id)).map((person) => person.name).join(', ')}.`
+                    : 'No proxy interviewer marked this time as free.'}
+                </p>
+              ) : null}
             </label>
             <label className="field">
               <span className="field-label">Step</span>
@@ -418,7 +431,7 @@ export function InterviewSheet({
                       setDirty(true)
                     }}
                   />
-                  <p className="help">PDF, DOC, DOCX, RTF, or TXT. Up to 8 MB. The assigned interviewer can download it.</p>
+                  <p suppressHydrationWarning className="help">PDF, DOC, DOCX, RTF, or TXT. Up to 8 MB. The assigned interviewer can download it.</p>
                 </>
               ) : null}
               {draft.resume && !removeResume ? (
@@ -442,9 +455,9 @@ export function InterviewSheet({
                   </span>
                 </div>
               ) : null}
-              {file ? <p className="help">Ready to upload {file.name}</p> : null}
-              {removeResume ? <p className="help">Resume will be removed when you save.</p> : null}
-              {!canManage && !draft.resume ? <p className="help">No resume uploaded.</p> : null}
+              {file ? <p suppressHydrationWarning className="help">Ready to upload {file.name}</p> : null}
+              {removeResume ? <p suppressHydrationWarning className="help">Resume will be removed when you save.</p> : null}
+              {!canManage && !draft.resume ? <p suppressHydrationWarning className="help">No resume uploaded.</p> : null}
             </div>
             <label className="field span-2">
               <span className="field-label">Note</span>
@@ -452,13 +465,13 @@ export function InterviewSheet({
             </label>
           </div>
           {(safeHref(draft.realMeetingLink) || safeHref(draft.jdLink)) ? (
-            <p className="help" style={{ marginTop: 12 }}>
+            <p suppressHydrationWarning className="help" style={{ marginTop: 12 }}>
               {safeHref(draft.realMeetingLink) ? <a className="open-link" href={safeHref(draft.realMeetingLink)!} target="_blank" rel="noreferrer">Open real meeting</a> : null}
               {safeHref(draft.jdLink) ? <a className="open-link" href={safeHref(draft.jdLink)!} target="_blank" rel="noreferrer">{safeHref(draft.realMeetingLink) ? ' · ' : ''}Open job description</a> : null}
             </p>
           ) : null}
           {canManage && people.length === 0 ? (
-            <p className="help" style={{ marginTop: 12 }}>
+            <p suppressHydrationWarning className="help" style={{ marginTop: 12 }}>
               {user.role === 'admin'
                 ? 'Add a proxy interviewer in Team before assigning interviews.'
                 : 'Ask an administrator to add a proxy interviewer.'}

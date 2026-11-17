@@ -47,7 +47,7 @@ function AccountForm() {
       <header className="page-head">
         <div>
           <h1>Account</h1>
-          <p>Your email stays with this account. You can change the password.</p>
+          <p suppressHydrationWarning>Your email stays with this account. You can change the password.</p>
         </div>
       </header>
       <div className="account-card">

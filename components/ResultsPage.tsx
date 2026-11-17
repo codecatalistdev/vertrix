@@ -113,7 +113,7 @@ function ResultsBoard() {
       <header className="page-head">
         <div>
           <h1>Results</h1>
-          <p>{subtitle}</p>
+          <p suppressHydrationWarning>{subtitle}</p>
         </div>
       </header>
       {error ? <div className="form-error" style={{ marginBottom: 12 }}>{error}</div> : null}

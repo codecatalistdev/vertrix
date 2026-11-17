@@ -54,7 +54,7 @@ export function SiteMarquee() {
     <div className="site-marquee" aria-hidden="true">
       <div>
         {Array.from({ length: 2 }, (_, copy) => (
-          <p key={copy}>
+          <p suppressHydrationWarning key={copy}>
             <span>Intro</span>
             <span>Tech</span>
             <span>Final</span>
@@ -102,7 +102,7 @@ export function SiteSlides({ start = 0, compact = false }: { start?: number; com
               <figcaption>
                 <span>{slide.kicker}</span>
                 <strong>{slide.title}</strong>
-                <p>{slide.body}</p>
+                <p suppressHydrationWarning>{slide.body}</p>
               </figcaption>
             </figure>
           ))}

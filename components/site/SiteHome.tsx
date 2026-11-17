@@ -14,12 +14,12 @@ export function SiteHome() {
     <main>
       <section className="home-split">
         <div>
-          <p className="site-kicker">Remote roles</p>
+          <p suppressHydrationWarning className="site-kicker">Remote roles</p>
           <h1>
             A real interviewer
             <span> on the remote call.</span>
           </h1>
-          <p className="site-lede">
+          <p suppressHydrationWarning className="site-lede">
             Vertrix sits remote interviews for hiring teams. The candidate joins from wherever they are. Our proxy
             interviewer joins from their own desk. The result is written down before the call goes cold.
           </p>
@@ -51,7 +51,7 @@ export function SiteHome() {
       <SiteSlides />
 
       <section className="site-block">
-        <p className="site-kicker">The remote week</p>
+        <p suppressHydrationWarning className="site-kicker">The remote week</p>
         <h2>
           One calendar for calls
           <span> that cross an ocean.</span>
@@ -88,17 +88,17 @@ export function SiteHome() {
         <article>
           <img src="/site/room.jpg" alt="A quiet room set up for a night call" />
           <h3>The call has a room</h3>
-          <p>The real meeting link stays with the interview. A support link can be updated by anyone in the room.</p>
+          <p suppressHydrationWarning>The real meeting link stays with the interview. A support link can be updated by anyone in the room.</p>
         </article>
         <article>
           <img src="/site/desk.jpg" alt="A laptop and resume ready for a remote interview" />
           <h3>The resume travels with it</h3>
-          <p>The proxy interviewer downloads the resume, joins only the calls assigned to them, and leaves a note.</p>
+          <p suppressHydrationWarning>The proxy interviewer downloads the resume, joins only the calls assigned to them, and leaves a note.</p>
         </article>
         <article>
           <img src="/site/studio.jpg" alt="A bright room used for remote hiring conversations" />
           <h3>The stage stays visible</h3>
-          <p>Intro, tech, final, and offer each keep a result, so a remote loop does not collapse into one status.</p>
+          <p suppressHydrationWarning>Intro, tech, final, and offer each keep a result, so a remote loop does not collapse into one status.</p>
         </article>
       </section>
 

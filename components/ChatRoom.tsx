@@ -118,7 +118,7 @@ function Room({ id }: { id: string }) {
     return (
       <section className="narrow-card">
         <h1>Room unavailable</h1>
-        <p>{error || 'You don’t have access to this interview.'}</p>
+        <p suppressHydrationWarning>{error || 'You don’t have access to this interview.'}</p>
         <Link className="btn btn-primary" href="/">Back to calendar</Link>
       </section>
     )
@@ -148,7 +148,7 @@ function Room({ id }: { id: string }) {
             Materials
           </button>
         </div>
-        <p className="room-meta">
+        <p suppressHydrationWarning className="room-meta">
           {formatWeekday(interview.date, 'long')} {interview.date.slice(8, 10)} · {formatClock(range.start, CET_ZONE)}–{formatClock(range.end, CET_ZONE)} CET
           {' · '}
           {formatClock(range.start, EST_ZONE)}–{formatClock(range.end, EST_ZONE)} EST
@@ -179,7 +179,7 @@ function Room({ id }: { id: string }) {
             <div className="sheet-head">
               <div>
                 <h2>Materials</h2>
-                <p className="room-meta">{interview.title}</p>
+                <p suppressHydrationWarning className="room-meta">{interview.title}</p>
               </div>
               <button className="btn btn-ghost" type="button" onClick={() => setMaterialsOpen(false)}>Close</button>
             </div>
@@ -192,7 +192,7 @@ function Room({ id }: { id: string }) {
                     <a className="btn btn-primary" href={jdHref} target="_blank" rel="noreferrer">Open</a>
                   </div>
                 ) : (
-                  <p className="material-empty">No job description.</p>
+                  <p suppressHydrationWarning className="material-empty">No job description.</p>
                 )}
               </article>
               <article className="material-card">
@@ -203,7 +203,7 @@ function Room({ id }: { id: string }) {
                     <a className="btn btn-primary" href={`/api/interviews/${id}/resume`}>Download</a>
                   </div>
                 ) : (
-                  <p className="material-empty">No resume uploaded.</p>
+                  <p suppressHydrationWarning className="material-empty">No resume uploaded.</p>
                 )}
               </article>
               {docHref ? (
@@ -217,7 +217,7 @@ function Room({ id }: { id: string }) {
               ) : null}
               <article className="material-card">
                 <h3>Note</h3>
-                {interview.note.trim() ? <p>{interview.note}</p> : <p className="material-empty">No note.</p>}
+                {interview.note.trim() ? <p suppressHydrationWarning>{interview.note}</p> : <p suppressHydrationWarning className="material-empty">No note.</p>}
               </article>
             </div>
           </aside>

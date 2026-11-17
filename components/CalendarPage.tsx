@@ -24,8 +24,9 @@ import {
   weekDates,
   zonedLocalToUtc,
 } from '@/lib/time'
+import type { AvailabilitySlot } from '@/lib/availability'
 import type { InterviewView } from '@/lib/types'
-import { useCurrentUser } from './AppShell'
+import { useCurrentUser, useToast } from './AppShell'
 import { useDeskData } from './DeskData'
 import { IconChevron } from './icons'
 import { createDraft, Draft, editDraft, InterviewSheet } from './InterviewSheet'
@@ -37,17 +38,23 @@ function MonthGrid({
   month,
   today,
   interviews,
+  availability,
   canCreate,
   onOpenDay,
   onOpenInterview,
+  onOpenSlot,
+  onRemoveSlot,
 }: {
   days: string[]
   month: string
   today: string
   interviews: InterviewView[]
+  availability: AvailabilitySlot[]
   canCreate: boolean
   onOpenDay: (date: string) => void
   onOpenInterview: (interview: InterviewView) => void
+  onOpenSlot: (slot: AvailabilitySlot) => void
+  onRemoveSlot: (id: string) => void
 }) {
   const weekdays = days.slice(0, 7)
   return (
@@ -96,6 +103,22 @@ function MonthGrid({
                   </button>
                 )
               })}
+              {availability.filter((slot) => slot.date === day).map((slot) => (
+                <button
+                  key={slot.id}
+                  className="month-free"
+                  type="button"
+                  title={canCreate ? `Schedule with ${slot.userName}` : 'Remove this free time'}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    if (!canCreate) onRemoveSlot(slot.id)
+                    else onOpenSlot(slot)
+                  }}
+                >
+                  <span>{slot.userName}</span>
+                  <span>{formatClock(zonedLocalToUtc(day, slot.startMinutes, CET_ZONE), CET_ZONE)}</span>
+                </button>
+              ))}
             </div>
           )
         })}
@@ -151,7 +174,7 @@ function GoogleConnect() {
         <button className="btn btn-ghost" type="button" disabled={busy} onClick={() => void disconnect()}>
           {busy ? 'Disconnecting…' : 'Disconnect Google Calendar'}
         </button>
-        {problem ? <p className="form-error">{problem}</p> : null}
+        {problem ? <p suppressHydrationWarning className="form-error">{problem}</p> : null}
       </div>
     )
   }
@@ -165,15 +188,19 @@ function GoogleConnect() {
 
 function CalendarBoard() {
   const user = useCurrentUser()
+  const toast = useToast()
   const router = useRouter()
   const canCreate = canManageInterview(user.role)
+  const canMark = user.role === 'proxy'
   const scrollRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ date: string; anchor: number; current: number } | null>(null)
   const [cursor, setCursor] = useState(() => cetToday())
   const [view, setView] = useState<'week' | 'month'>('week')
-  const { interviews, people, error, reload } = useDeskData()
+  const { interviews, people, availability, error, reload } = useDeskData()
   const [draft, setDraft] = useState<Draft | null>(null)
   const [selection, setSelection] = useState<{ date: string; start: number; end: number } | null>(null)
+  const [optimistic, setOptimistic] = useState<AvailabilitySlot[]>([])
+  const hideLiveOn = useRef<string | null>(null)
   const [nowMinutes, setNowMinutes] = useState(() => nowMinutesInZone(CET_ZONE))
 
   const monday = mondayOnOrBefore(cursor)
@@ -198,16 +225,93 @@ function CalendarBoard() {
     else setCursor(addMonths(monthStart(cursor), direction))
   }
 
+  function proxiesFree(date: string, start: number, end: number) {
+    const ids = new Set<string>()
+    for (const slot of availability) {
+      if (slot.date === date && slot.startMinutes <= start && slot.endMinutes >= end) ids.add(slot.userId)
+    }
+    return [...ids]
+  }
+
+  function draftFor(date: string, start: number, duration: number, interviewerId = '') {
+    const end = start + duration
+    const free = proxiesFree(date, start, end)
+    const chosen = interviewerId || (free.length === 1 ? free[0] : people.length === 1 ? people[0].id : '')
+    return { ...createDraft({ date, startMinutes: start, durationMinutes: duration, interviewerId: chosen }), freeProxyIds: free }
+  }
+
   function openDay(date: string) {
     if (!canCreate) return
-    const onlyProxy = people.length === 1 ? people[0].id : ''
-    setDraft(createDraft({ date, startMinutes: 9 * 60, durationMinutes: 60, interviewerId: onlyProxy }))
+    setDraft(draftFor(date, 9 * 60, 60))
+  }
+
+  const freeTime = useMemo(() => {
+    const extra = optimistic.filter((slot) => !availability.some((saved) =>
+      saved.userId === slot.userId && saved.date === slot.date && saved.startMinutes <= slot.startMinutes && saved.endMinutes >= slot.endMinutes,
+    ))
+    return extra.length ? [...availability, ...extra] : availability
+  }, [availability, optimistic])
+
+  function liveBand(date: string) {
+    return scrollRef.current?.querySelector<HTMLElement>(`[data-live="${date}"]`) ?? null
+  }
+
+  function paintLive(date: string, start: number, end: number) {
+    const node = liveBand(date)
+    if (!node) return
+    const shownEnd = Math.max(end, Math.min(1440, start + 15))
+    node.style.display = 'block'
+    node.style.top = `${(start / 60) * HOUR}px`
+    node.style.height = `${Math.max(((shownEnd - start) / 60) * HOUR, 16)}px`
+    const label = node.querySelector('span')
+    if (label) {
+      const from = formatClock(zonedLocalToUtc(date, start, CET_ZONE), CET_ZONE)
+      const to = formatClock(zonedLocalToUtc(date, shownEnd, CET_ZONE), CET_ZONE)
+      label.textContent = `${from} – ${to}`
+    }
+  }
+
+  async function markFree(date: string, start: number, end: number, localId: string) {
+    try {
+      await api('/api/availability', {
+        method: 'POST',
+        body: JSON.stringify({ date, startMinutes: start, endMinutes: end }),
+      })
+      await reload()
+    } catch (caught) {
+      setOptimistic((current) => current.filter((slot) => slot.id !== localId))
+      toast(caught instanceof Error ? caught.message : 'Could not save free time.')
+    }
+  }
+
+  async function removeFree(id: string) {
+    try {
+      await api(`/api/availability/${id}`, { method: 'DELETE' })
+      toast('Free time removed')
+      await reload()
+    } catch (caught) {
+      toast(caught instanceof Error ? caught.message : 'Could not remove free time.')
+    }
   }
 
   useEffect(() => {
     const timer = window.setInterval(() => setNowMinutes(nowMinutesInZone(CET_ZONE)), 30000)
     return () => window.clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    const date = hideLiveOn.current
+    if (!date) return
+    hideLiveOn.current = null
+    const node = liveBand(date)
+    if (node) node.style.display = 'none'
+  }, [optimistic])
+
+  useEffect(() => {
+    const drag = dragRef.current
+    if (!canMark || !drag) return
+    paintLive(drag.date, Math.min(drag.anchor, drag.current), Math.max(drag.anchor, drag.current))
+  })
 
   useEffect(() => {
     const scroller = scrollRef.current
@@ -231,7 +335,7 @@ function CalendarBoard() {
   }
 
   function onPointerDown(event: PointerEvent<HTMLDivElement>, date: string) {
-    if (!canCreate || event.button !== 0 || event.pointerType === 'touch') return
+    if (!(canCreate || canMark) || event.button !== 0 || event.pointerType === 'touch') return
     event.preventDefault()
     try {
       event.currentTarget.setPointerCapture(event.pointerId)
@@ -240,7 +344,8 @@ function CalendarBoard() {
     }
     const minutes = minutesFromPointer(event)
     dragRef.current = { date, anchor: minutes, current: minutes }
-    setSelection({ date, start: minutes, end: minutes })
+    if (canMark) paintLive(date, minutes, minutes)
+    else setSelection({ date, start: minutes, end: minutes })
   }
 
   function onPointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -248,11 +353,10 @@ function CalendarBoard() {
     if (!drag) return
     const minutes = minutesFromPointer(event)
     drag.current = minutes
-    setSelection({
-      date: drag.date,
-      start: Math.min(drag.anchor, minutes),
-      end: Math.max(drag.anchor, minutes),
-    })
+    const start = Math.min(drag.anchor, minutes)
+    const end = Math.max(drag.anchor, minutes)
+    if (canMark) paintLive(drag.date, start, end)
+    else setSelection({ date: drag.date, start, end })
   }
 
   function onPointerUp(event: PointerEvent<HTMLDivElement>) {
@@ -270,20 +374,29 @@ function CalendarBoard() {
         start = 1425
       }
     }
-    const onlyProxy = people.length === 1 ? people[0].id : ''
-    setDraft(createDraft({ date: drag.date, startMinutes: start, durationMinutes: end - start, interviewerId: onlyProxy }))
+    if (canMark) {
+      const localId = `local-${Date.now()}`
+      hideLiveOn.current = drag.date
+      setOptimistic((current) => [
+        ...current,
+        { id: localId, userId: user.id, userName: user.name, date: drag.date, startMinutes: start, endMinutes: end },
+      ])
+      void markFree(drag.date, start, end, localId)
+    } else {
+      setDraft(draftFor(drag.date, start, end - start))
+    }
     if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId)
     }
   }
 
-  const subtitle = view === 'month'
-    ? canCreate
-      ? 'Select a day to assign an interview. Times are CET, with EST shown beside them.'
-      : 'Interviews assigned to you. Times are CET, with EST shown beside them.'
-    : canCreate
-      ? 'Drag across a day to assign an interview. The schedule clock is CET, with EST shown beside it.'
-      : 'Interviews assigned to you. Times are CET, with EST shown beside them.'
+  const subtitle = canMark
+    ? view === 'month'
+      ? 'Gray time is when you are free. Use Week and drag a day to change it.'
+      : 'Drag across a day to mark when you are free. Click a gray block to remove it. Times are CET, with EST shown beside them.'
+    : view === 'month'
+      ? 'Select a day to assign an interview. Gray time is when a proxy interviewer is free.'
+      : 'Drag across a day to assign an interview. Gray time is when a proxy interviewer is free.'
   const rangeLabel = view === 'week' ? 'week' : 'month'
 
   return (
@@ -291,7 +404,7 @@ function CalendarBoard() {
       <header className="page-head">
         <div>
           <h1>Calendar</h1>
-          <p>{subtitle}</p>
+          <p suppressHydrationWarning>{subtitle}</p>
         </div>
       </header>
       {error ? <div className="form-error" style={{ marginBottom: 12 }}>{error}</div> : null}
@@ -327,9 +440,12 @@ function CalendarBoard() {
             month={monthStart(cursor)}
             today={today}
             interviews={visible}
+            availability={freeTime.filter((slot) => monthDays.includes(slot.date))}
             canCreate={canCreate}
             onOpenDay={openDay}
             onOpenInterview={(interview) => setDraft(editDraft(interview))}
+            onOpenSlot={(slot) => setDraft(draftFor(slot.date, slot.startMinutes, slot.endMinutes - slot.startMinutes, slot.userId))}
+            onRemoveSlot={(id) => void removeFree(id)}
           />
         ) : (
         <div className="cal-scroll" ref={scrollRef}>
@@ -362,6 +478,8 @@ function CalendarBoard() {
             {days.includes(today) ? <div className="now-line" style={{ top: (nowMinutes / 60) * HOUR }} /> : null}
             {days.map((day) => {
               const dayEvents = visible.filter((interview) => interview.date === day)
+              const dayFree = freeTime.filter((slot) => slot.date === day)
+              const freePlaced = placeEvents(dayFree.map((slot) => ({ id: slot.id, start: slot.startMinutes, end: slot.endMinutes })))
               const placed = placeEvents(dayEvents.map((interview) => ({
                 id: interview.id,
                 start: interview.startMinutes,
@@ -370,7 +488,7 @@ function CalendarBoard() {
               return (
                 <div
                   key={day}
-                  className={`cal-col${day === today ? ' is-today' : ''}${canCreate ? ' can-create' : ''}`}
+                  className={`cal-col${day === today ? ' is-today' : ''}${canCreate || canMark ? ' can-create' : ''}`}
                   onPointerDown={(event) => onPointerDown(event, day)}
                   onPointerMove={onPointerMove}
                   onPointerUp={onPointerUp}
@@ -378,6 +496,38 @@ function CalendarBoard() {
                   {Array.from({ length: 24 }, (_, hour) => (
                     <div key={`h-${hour}`} className="hour-line" style={{ top: (hour + 1) * HOUR }} />
                   ))}
+                  {canMark ? (
+                    <div className="availability mine is-live" data-live={day}>
+                      <strong>{user.name}</strong>
+                      <span />
+                    </div>
+                  ) : null}
+                  {dayFree.map((slot) => {
+                    const spot = freePlaced.get(slot.id) ?? { col: 0, cols: 1 }
+                    const startLabel = formatClock(zonedLocalToUtc(day, slot.startMinutes, CET_ZONE), CET_ZONE)
+                    const endLabel = formatClock(zonedLocalToUtc(day, slot.endMinutes, CET_ZONE), CET_ZONE)
+                    return (
+                      <div
+                        key={slot.id}
+                        className={canMark ? 'availability mine' : 'availability'}
+                        style={{
+                          top: (slot.startMinutes / 60) * HOUR,
+                          height: Math.max(((slot.endMinutes - slot.startMinutes) / 60) * HOUR, 14),
+                          left: `calc(${spot.col} * (100% / ${spot.cols}))`,
+                          width: `calc(100% / ${spot.cols})`,
+                        }}
+                        title={canMark ? 'Click to remove this free time' : `${slot.userName} is free ${startLabel} – ${endLabel} CET`}
+                        onPointerDown={canMark ? (event) => event.stopPropagation() : undefined}
+                        onClick={canMark ? (event) => {
+                          event.stopPropagation()
+                          void removeFree(slot.id)
+                        } : undefined}
+                      >
+                        <strong>{slot.userName}</strong>
+                        <span>{startLabel} – {endLabel}</span>
+                      </div>
+                    )
+                  })}
                   {dayEvents.map((interview) => {
                     const spot = placed.get(interview.id) ?? { col: 0, cols: 1 }
                     const range = interviewInstants(interview.date, interview.startMinutes, interview.durationMinutes)

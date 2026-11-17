@@ -48,7 +48,7 @@ function TeamManager() {
       <header className="page-head">
         <div>
           <h1>Team</h1>
-          <p>Create accounts and assign the administrator, proxy interviewer, or interview supporter role.</p>
+          <p suppressHydrationWarning>Create accounts and assign the administrator, proxy interviewer, or interview supporter role.</p>
         </div>
         <button
           className="btn btn-primary"
@@ -193,7 +193,7 @@ function PersonSheet({
       <aside className="sheet" role="dialog" aria-modal="true" onMouseDown={(event) => event.stopPropagation()}>
         <header className="sheet-head">
           <div>
-            <p className="eyebrow">Team</p>
+            <p suppressHydrationWarning className="eyebrow">Team</p>
             <h2>{form.mode === 'create' ? 'Add person' : 'Edit person'}</h2>
           </div>
           <button className="icon-btn" type="button" aria-label="Close" onClick={onClose}><IconClose /></button>
@@ -237,7 +237,7 @@ function PersonSheet({
                 ))}
               </select>
             </label>
-            <p className="help">
+            <p suppressHydrationWarning className="help">
               Administrators manage the team and the full calendar. Interview supporters assign interviews. Proxy interviewers see only the interviews assigned to them.
             </p>
           </div>

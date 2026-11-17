@@ -54,7 +54,7 @@ export function SiteChrome({
               <Logo size={63} />
               <span className="brand-word">Vertrix</span>
             </div>
-            <p>Vertrix sits remote interviews. The desk assigns the call, the proxy takes the seat, and every stage stays on the record.</p>
+            <p suppressHydrationWarning>Vertrix sits remote interviews. The desk assigns the call, the proxy takes the seat, and every stage stays on the record.</p>
           </div>
           <div>
             <h2>The agency</h2>

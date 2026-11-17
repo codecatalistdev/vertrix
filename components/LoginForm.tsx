@@ -38,9 +38,9 @@ export function LoginForm() {
   return (
     <main className="site-login">
       <div className="login-card">
-        <p className="site-kicker">Team sign in</p>
+        <p suppressHydrationWarning className="site-kicker">Team sign in</p>
         <h1>Open the remote desk.</h1>
-        <p className="site-login-copy">The team that assigns and sits remote interviews uses this door.</p>
+        <p suppressHydrationWarning className="site-login-copy">The team that assigns and sits remote interviews uses this door.</p>
         <form className="login-form" onSubmit={onSubmit}>
           {error ? <div className="form-error">{error}</div> : null}
           <label className="field">

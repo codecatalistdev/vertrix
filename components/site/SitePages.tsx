@@ -42,12 +42,12 @@ export function ApproachPage() {
   return (
     <main>
       <header className="page-left">
-        <p className="site-kicker">How a remote interview moves</p>
+        <p suppressHydrationWarning className="site-kicker">How a remote interview moves</p>
         <h1>
           From the job description
           <span> to the call,</span> then the record.
         </h1>
-        <p className="site-lede">
+        <p suppressHydrationWarning className="site-lede">
           A remote role never shares a room. Vertrix still keeps one thread: who assigned it, who sat it, and what
           happened at each stage.
         </p>
@@ -59,7 +59,7 @@ export function ApproachPage() {
             <div>
               <span>{step.n}</span>
               <h2>{step.title}</h2>
-              <p>{step.body}</p>
+              <p suppressHydrationWarning>{step.body}</p>
             </div>
           </article>
         ))}
@@ -78,12 +78,12 @@ export function DeskPage() {
   return (
     <main>
       <header className="page-left">
-        <p className="site-kicker">The remote desk</p>
+        <p suppressHydrationWarning className="site-kicker">The remote desk</p>
         <h1>
           The call, the stage,
           <span> and the record</span> stay together.
         </h1>
-        <p className="site-lede">
+        <p suppressHydrationWarning className="site-lede">
           Remote interviews scatter across inboxes. The desk keeps the schedule, the result of each stage, and the room
           on the same interview.
         </p>
@@ -93,22 +93,22 @@ export function DeskPage() {
           <img src="/site/office.jpg" alt="A long office used by the remote interview team" />
           <div>
             <h2>Calendar</h2>
-            <p>A Monday week or a month. Drag a stretch of the day to place a remote interview. CET leads. EST sits beside it.</p>
+            <p suppressHydrationWarning>A Monday week or a month. Drag a stretch of the day to place a remote interview. CET leads. EST sits beside it.</p>
           </div>
         </article>
         <article>
           <h2>Results</h2>
-          <p>Each remote candidate has a cell for intro, tech, final, and offer. Open a cell and mark scheduled, waiting, passed, hold, failed, or offer.</p>
+          <p suppressHydrationWarning>Each remote candidate has a cell for intro, tech, final, and offer. Open a cell and mark scheduled, waiting, passed, hold, failed, or offer.</p>
         </article>
         <article>
           <h2>Dashboard</h2>
-          <p>Counts by month and by proxy interviewer. Administrators and supporters see the agency. A proxy sees only the remote interviews on their name.</p>
+          <p suppressHydrationWarning>Counts by month and by proxy interviewer. Administrators and supporters see the agency. A proxy sees only the remote interviews on their name.</p>
         </article>
         <article className="bento-wide">
           <img src="/site/room.jpg" alt="A dark room prepared for a late remote interview" />
           <div>
             <h2>Room</h2>
-            <p>The real meeting link is locked on the room page. Anyone in the room can edit the support link and the note. The resume stays attached.</p>
+            <p suppressHydrationWarning>The real meeting link is locked on the room page. Anyone in the room can edit the support link and the note. The resume stays attached.</p>
           </div>
         </article>
       </section>
@@ -132,12 +132,12 @@ export function AboutPage() {
       <section className="about-hero">
         <img src="/site/portrait.jpg" alt="A Vertrix interviewer with a laptop by the window" />
         <div>
-          <p className="site-kicker">The agency</p>
+          <p suppressHydrationWarning className="site-kicker">The agency</p>
           <h1>
             Built for hiring
             <span> that never shares a room.</span>
           </h1>
-          <p>
+          <p suppressHydrationWarning>
             Remote roles changed the interview. The candidate, the interviewer, and the hiring manager can be in three
             places. Vertrix is the agency that still puts a prepared person on that call and keeps a clear record after
             it.
@@ -147,21 +147,21 @@ export function AboutPage() {
       <section className="about-columns">
         <article>
           <h2>Why the clock is printed twice</h2>
-          <p>
+          <p suppressHydrationWarning>
             Our interviewers plan in Central European time. Many of the remote roles we sit are read by teams on US
             Eastern time. Both clocks stay on the interview, including through daylight saving.
           </p>
         </article>
         <article>
           <h2>Why a proxy interviewer</h2>
-          <p>
+          <p suppressHydrationWarning>
             The hiring team sends the role. A supporter assigns the call. The proxy interviewer sits it, sees only their
             own interviews, and leaves the stage result where the rest of the agency can read it.
           </p>
         </article>
         <article>
           <h2>Who this site is for</h2>
-          <p>
+          <p suppressHydrationWarning>
             These pages introduce the agency. The calendar, resumes, and rooms are for people on the Vertrix team. If
             you already sit remote interviews with us, sign in.
           </p>

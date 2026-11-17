@@ -30,8 +30,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const jar = await cookies()
   const session = await readSession(jar.get(SESSION_COOKIE)?.value)
   return (
-    <html lang="en" className={brand.variable}>
-      <body>
+    <html lang="en" className={brand.variable} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <RootFrame signedIn={Boolean(session)}>{children}</RootFrame>
       </body>
     </html>

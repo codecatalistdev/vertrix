@@ -91,7 +91,7 @@ function DashboardBoard() {
       <header className="page-head">
         <div>
           <h1>Dashboard</h1>
-          <p>{subtitle}</p>
+          <p suppressHydrationWarning>{subtitle}</p>
         </div>
         <label className="year-field">
           <span>Year</span>
@@ -116,7 +116,7 @@ function DashboardBoard() {
         <div className="chart-head">
           <div>
             <h2>Each step</h2>
-            <p>Intro, Tech, Final, and Offer, so the current stage is visible beside the earlier results.</p>
+            <p suppressHydrationWarning>Intro, Tech, Final, and Offer, so the current stage is visible beside the earlier results.</p>
           </div>
           <Legend
             items={[
@@ -129,19 +129,19 @@ function DashboardBoard() {
             ]}
           />
         </div>
-        {interviews === null ? <p className="chart-empty">Loading…</p> : <StepChart rows={steps} />}
+        {interviews === null ? <p suppressHydrationWarning className="chart-empty">Loading…</p> : <StepChart rows={steps} />}
       </article>
       <article className="chart-card">
         <div className="chart-head">
           <div>
             <h2>{canManage ? 'Interview status' : 'Your interviews'}</h2>
-            <p>{canManage ? 'The result saved for every step. The outlined result is the current stage.' : 'The result of every step on interviews assigned to you. The outlined result is the current stage.'}</p>
+            <p suppressHydrationWarning>{canManage ? 'The result saved for every step. The outlined result is the current stage.' : 'The result of every step on interviews assigned to you. The outlined result is the current stage.'}</p>
           </div>
         </div>
         {interviews === null ? (
-          <p className="chart-empty">Loading…</p>
+          <p suppressHydrationWarning className="chart-empty">Loading…</p>
         ) : listed.length === 0 ? (
-          <p className="chart-empty">No interviews in {year}.</p>
+          <p suppressHydrationWarning className="chart-empty">No interviews in {year}.</p>
         ) : (
           <div className="status-scroll">
             <table className="status-table">
@@ -181,14 +181,14 @@ function DashboardBoard() {
         <div className="chart-head">
           <div>
             <h2>Each month</h2>
-            <p>How many interviews were scheduled, and how many passed or failed.</p>
+            <p suppressHydrationWarning>How many interviews were scheduled, and how many passed or failed.</p>
           </div>
           <Legend items={SERIES.map((item) => ({ label: item.label, color: item.color }))} />
         </div>
         {interviews === null ? (
-          <p className="chart-empty">Loading…</p>
+          <p suppressHydrationWarning className="chart-empty">Loading…</p>
         ) : activeMonths.length === 0 ? (
-          <p className="chart-empty">No interviews in {year}.</p>
+          <p suppressHydrationWarning className="chart-empty">No interviews in {year}.</p>
         ) : (
           <>
             <MonthChart months={months} />
@@ -220,7 +220,7 @@ function DashboardBoard() {
           <div className="chart-head">
             <div>
               <h2>Each proxy interviewer</h2>
-              <p>Interviews assigned in {year}, split by the current result.</p>
+              <p suppressHydrationWarning>Interviews assigned in {year}, split by the current result.</p>
             </div>
             <Legend
               items={[
@@ -234,9 +234,9 @@ function DashboardBoard() {
             />
           </div>
           {interviews === null ? (
-            <p className="chart-empty">Loading…</p>
+            <p suppressHydrationWarning className="chart-empty">Loading…</p>
           ) : interviewers.length === 0 ? (
-            <p className="chart-empty">No proxy interviewers yet.</p>
+            <p suppressHydrationWarning className="chart-empty">No proxy interviewers yet.</p>
           ) : (
             <InterviewerChart rows={interviewers} />
           )}
