@@ -822,6 +822,26 @@ input[type='file'].input { height: auto; padding: 11px 12px; background: white; 
   box-shadow: var(--shadow);
 }
 .room-top { padding: 18px 18px 8px; border-bottom: 1px solid var(--line); }
+.room-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.room-heading h1 { margin-top: 4px; }
+.material-list { display: flex; flex-direction: column; gap: 14px; }
+.material-card {
+  border: 1px solid #e3ebf5;
+  border-radius: 16px;
+  padding: 16px;
+  background: #f8fbff;
+}
+.material-card h3 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.material-card p { margin: 0; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+.material-empty { color: var(--ink-soft); }
+.material-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.material-url { color: var(--ink); word-break: break-all; }
 .room-top h1 {
   margin: 0;
   font-family: var(--serif);

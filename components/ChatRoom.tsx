@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { api } from '@/lib/api-client'
 import { CET_ZONE, EST_ZONE, ROLE_LABEL, STATUSES, stepLabel } from '@/lib/constants'
-import { safeHref } from '@/lib/format'
+import { formatBytes, safeHref } from '@/lib/format'
 import { formatClock, formatWeekday, formatWhen, interviewInstants } from '@/lib/time'
 import type { ChatMessage, InterviewView } from '@/lib/types'
 import { useCurrentUser, useToast } from './AppShell'
@@ -26,6 +26,7 @@ function Room({ id }: { id: string }) {
   const [missing, setMissing] = useState(false)
   const [sending, setSending] = useState(false)
   const [savingLinks, setSavingLinks] = useState(false)
+  const [materialsOpen, setMaterialsOpen] = useState(false)
 
   async function loadInterview() {
     try {
@@ -57,6 +58,15 @@ function Room({ id }: { id: string }) {
     return () => window.clearInterval(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
+
+  useEffect(() => {
+    if (!materialsOpen) return
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') setMaterialsOpen(false)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [materialsOpen])
 
   const lastId = messages[messages.length - 1]?.id
   useEffect(() => {
@@ -123,12 +133,21 @@ function Room({ id }: { id: string }) {
   const linksDirty = supportLink !== interview.supportMeetingLink
   const realHref = safeHref(interview.realMeetingLink)
   const supportHref = safeHref(supportLink)
+  const jdHref = safeHref(interview.jdLink)
+  const docHref = safeHref(interview.docLink)
 
   return (
     <section className="room">
       <div className="room-top">
-        <Link className="back-link" href="/">Back to calendar</Link>
-        <h1>{interview.title}</h1>
+        <div className="room-heading">
+          <div>
+            <Link className="back-link" href="/">Back to calendar</Link>
+            <h1>{interview.title}</h1>
+          </div>
+          <button className="btn btn-ghost" type="button" onClick={() => setMaterialsOpen(true)}>
+            Materials
+          </button>
+        </div>
         <p className="room-meta">
           {formatWeekday(interview.date, 'long')} {interview.date.slice(8, 10)} · {formatClock(range.start, CET_ZONE)}–{formatClock(range.end, CET_ZONE)} CET
           {' · '}
@@ -154,6 +173,56 @@ function Room({ id }: { id: string }) {
           </button>
         </div>
       </div>
+      {materialsOpen ? (
+        <div className="sheet-backdrop" onClick={() => setMaterialsOpen(false)}>
+          <aside className="sheet" role="dialog" aria-label="Interview materials" onClick={(event) => event.stopPropagation()}>
+            <div className="sheet-head">
+              <div>
+                <h2>Materials</h2>
+                <p className="room-meta">{interview.title}</p>
+              </div>
+              <button className="btn btn-ghost" type="button" onClick={() => setMaterialsOpen(false)}>Close</button>
+            </div>
+            <div className="sheet-body material-list">
+              <article className="material-card">
+                <h3>Job description</h3>
+                {jdHref ? (
+                  <div className="material-row">
+                    <a className="material-url" href={jdHref} target="_blank" rel="noreferrer">{interview.jdLink}</a>
+                    <a className="btn btn-primary" href={jdHref} target="_blank" rel="noreferrer">Open</a>
+                  </div>
+                ) : (
+                  <p className="material-empty">No job description.</p>
+                )}
+              </article>
+              <article className="material-card">
+                <h3>Resume</h3>
+                {interview.resume ? (
+                  <div className="material-row">
+                    <span>{interview.resume.originalName} · {formatBytes(interview.resume.size)}</span>
+                    <a className="btn btn-primary" href={`/api/interviews/${id}/resume`}>Download</a>
+                  </div>
+                ) : (
+                  <p className="material-empty">No resume uploaded.</p>
+                )}
+              </article>
+              {docHref ? (
+                <article className="material-card">
+                  <h3>Document</h3>
+                  <div className="material-row">
+                    <a className="material-url" href={docHref} target="_blank" rel="noreferrer">{interview.docLink}</a>
+                    <a className="btn btn-primary" href={docHref} target="_blank" rel="noreferrer">Open</a>
+                  </div>
+                </article>
+              ) : null}
+              <article className="material-card">
+                <h3>Note</h3>
+                {interview.note.trim() ? <p>{interview.note}</p> : <p className="material-empty">No note.</p>}
+              </article>
+            </div>
+          </aside>
+        </div>
+      ) : null}
       <div
         className="thread"
         ref={listRef}
