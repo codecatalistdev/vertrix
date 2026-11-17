@@ -24,8 +24,8 @@ export function SiteChrome({
       <header className="site-nav">
         <div className="site-nav-bar">
           <Link className="site-brand" href="/">
-            <Logo size={28} />
-            <span>Vertrix</span>
+            <Logo size={63} />
+            <span className="brand-word">Vertrix</span>
           </Link>
           <nav className="site-links">
             {LINKS.map((link) => (
@@ -51,8 +51,8 @@ export function SiteChrome({
         <div className="site-foot-grid">
           <div>
             <div className="site-brand">
-              <Logo size={28} />
-              <span>Vertrix</span>
+              <Logo size={63} />
+              <span className="brand-word">Vertrix</span>
             </div>
             <p>Vertrix sits remote interviews. The desk assigns the call, the proxy takes the seat, and every stage stays on the record.</p>
           </div>

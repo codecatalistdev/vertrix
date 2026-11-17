@@ -27,7 +27,7 @@ export function useToast() {
 export function LoadingScreen() {
   return (
     <div className="loading-screen">
-      <Logo size={42} />
+      <Logo size={84} />
     </div>
   )
 }

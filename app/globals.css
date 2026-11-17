@@ -57,19 +57,25 @@ a { color: inherit; }
 
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand-stacked { flex-direction: column; gap: 14px; text-align: center; }
-.brand-name {
-  font-family: var(--serif);
-  font-weight: 560;
-  letter-spacing: -0.035em;
-  line-height: 0.95;
-  font-size: 22px;
+.logo-mark {
+  display: block;
+  object-fit: contain;
+  mix-blend-mode: screen;
 }
-.brand-stacked .brand-name {
-  font-size: 48px;
-  background: linear-gradient(105deg, #0f8f86 0%, #1d4ed8 58%, #d97706 130%);
+.brand-name, .brand-word {
+  font-family: var(--font-brand), "Segoe UI", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  font-size: 18px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff6d2 0%, #f2c14e 46%, #c9922a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+.brand-stacked .brand-name {
+  font-size: 40px;
 }
 .brand-tag {
   margin-top: 8px;
@@ -202,7 +208,7 @@ input[type='file'].input { height: auto; padding: 11px 12px; background: white; 
   background: #0b1220;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
-.sidebar .brand-name { color: white; }
+.sidebar .brand-name { color: transparent; }
 .nav { display: flex; flex-direction: column; gap: 4px; }
 .nav-link {
   display: flex;
@@ -923,8 +929,8 @@ a.btn { text-decoration: none; }
   gap: 10px;
   color: white;
   text-decoration: none;
-  font-weight: 800;
-  letter-spacing: -0.04em;
+  font-weight: 600;
+  letter-spacing: 0;
   font-size: 18px;
   flex: none;
 }
