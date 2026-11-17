@@ -1,4 +1,5 @@
 import { assertOrigin, requireUser } from '@/lib/auth'
+import { pushInterview, removeInterviewFromGoogle } from '@/lib/google-calendar'
 import { HttpError } from '@/lib/errors'
 import { fail, json } from '@/lib/http'
 import { deleteInterview, getInterview, updateInterview } from '@/lib/store'
@@ -26,7 +27,9 @@ export async function PUT(request: NextRequest, context: Context) {
     const { id } = await context.params
     const body = await request.json().catch(() => null)
     if (!body) throw new HttpError(400, 'The request could not be read.')
-    return json({ interview: await updateInterview(user, id, body) })
+    const interview = await updateInterview(user, id, body)
+    await pushInterview(interview)
+    return json({ interview })
   } catch (error) {
     return fail(error)
   }
@@ -38,6 +41,7 @@ export async function DELETE(request: NextRequest, context: Context) {
     const user = await requireUser(request)
     const { id } = await context.params
     await deleteInterview(user, id)
+    await removeInterviewFromGoogle(id)
     return json({ ok: true })
   } catch (error) {
     return fail(error)

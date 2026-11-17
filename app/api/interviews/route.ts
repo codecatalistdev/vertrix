@@ -1,4 +1,5 @@
 import { assertOrigin, requireUser } from '@/lib/auth'
+import { pushInterview } from '@/lib/google-calendar'
 import { HttpError } from '@/lib/errors'
 import { fail, json } from '@/lib/http'
 import { createInterview, listInterviews } from '@/lib/store'
@@ -23,6 +24,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => null)
     if (!body) throw new HttpError(400, 'The request could not be read.')
     const interview = await createInterview(user, body)
+    await pushInterview(interview)
     return json({ interview }, 201)
   } catch (error) {
     return fail(error)

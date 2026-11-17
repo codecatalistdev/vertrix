@@ -388,6 +388,8 @@ input[type='file'].input { height: auto; padding: 11px 12px; background: white; 
   background: #2bd4f0;
   z-index: 8;
 }
+.google-connect { margin: 0 0 16px; }
+a.btn { text-decoration: none; }
 .cal-toolbar {
   display: flex;
   justify-content: space-between;

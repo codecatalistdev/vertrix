@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { PointerEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { api } from '@/lib/api-client'
 import { CET_ZONE, EST_ZONE, STATUSES, stepLabel } from '@/lib/constants'
 import { hexToRgba } from '@/lib/format'
 import { placeEvents } from '@/lib/layout-events'
@@ -105,6 +106,55 @@ function MonthGrid({
 
 export function CalendarScreen() {
   return <CalendarBoard />
+}
+
+function GoogleConnect() {
+  const [connected, setConnected] = useState(false)
+  const [busy, setBusy] = useState(false)
+
+  function loadStatus() {
+    return api<{ connected: boolean }>('/api/calendar/google')
+      .then((data) => setConnected(data.connected))
+      .catch((caught) => {
+        if (caught instanceof Error && caught.message === 'Sign in required.') return
+      })
+  }
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('google')) {
+      params.delete('google')
+      const next = params.toString()
+      window.history.replaceState(null, '', next ? `/?${next}` : '/')
+    }
+    void loadStatus()
+  }, [])
+
+  async function disconnect() {
+    setBusy(true)
+    try {
+      await api('/api/calendar/google', { method: 'DELETE' })
+      setConnected(false)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (connected) {
+    return (
+      <div className="google-connect">
+        <button className="btn btn-ghost" type="button" disabled={busy} onClick={() => void disconnect()}>
+          {busy ? 'Disconnecting…' : 'Disconnect Google Calendar'}
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="google-connect">
+      <a className="btn btn-primary" href="/api/calendar/google/start">Connect Google Calendar</a>
+    </div>
+  )
 }
 
 function CalendarBoard() {
@@ -239,6 +289,7 @@ function CalendarBoard() {
         </div>
       </header>
       {error ? <div className="form-error" style={{ marginBottom: 12 }}>{error}</div> : null}
+      <GoogleConnect />
       <div className="calendar">
         <div className="cal-toolbar">
           <div className="week-nav">
