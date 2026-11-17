@@ -389,6 +389,7 @@ input[type='file'].input { height: auto; padding: 11px 12px; background: white; 
   z-index: 8;
 }
 .google-connect { margin: 0 0 16px; }
+.google-connect .form-error { margin-top: 10px; }
 a.btn { text-decoration: none; }
 .cal-toolbar {
   display: flex;

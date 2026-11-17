@@ -234,6 +234,25 @@ async function calendarFetch(userId: string, account: Account, path: string, ini
   })
 }
 
+function googleDateTime(date: Date) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: CET_ZONE,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(date)
+  const map: Record<string, string> = {}
+  for (const part of parts) {
+    if (part.type !== 'literal') map[part.type] = part.value
+  }
+  const hour = map.hour === '24' ? '00' : map.hour
+  return `${map.year}-${map.month}-${map.day}T${hour}:${map.minute}:${map.second}`
+}
+
 function eventBody(interview: InterviewView) {
   const range = interviewInstants(interview.date, interview.startMinutes, interview.durationMinutes)
   const status = STATUSES.find((item) => item.value === interview.status)?.label ?? interview.status
@@ -254,9 +273,24 @@ function eventBody(interview: InterviewView) {
   return {
     summary,
     description,
-    start: { dateTime: range.start.toISOString() },
-    end: { dateTime: range.end.toISOString() },
+    start: { dateTime: googleDateTime(range.start), timeZone: CET_ZONE },
+    end: { dateTime: googleDateTime(range.end), timeZone: CET_ZONE },
+    extendedProperties: { private: { vertrixId: interview.id } },
   }
+}
+
+async function existingEventId(userId: string, account: Account, interviewId: string) {
+  const saved = await readJson<{ id: string }>(eventPath(userId, interviewId))
+  if (saved?.id) return saved.id
+  const query = new URLSearchParams({
+    privateExtendedProperty: `vertrixId=${interviewId}`,
+    maxResults: '1',
+    singleEvents: 'true',
+  })
+  const response = await calendarFetch(userId, account, `/calendars/primary/events?${query}`)
+  if (!response.ok) return null
+  const data = (await response.json().catch(() => ({}))) as { items?: { id?: string }[] }
+  return data.items?.[0]?.id ?? null
 }
 
 async function rememberFailure(userId: string, account: Account, error: unknown) {
@@ -266,14 +300,16 @@ async function rememberFailure(userId: string, account: Account, error: unknown)
 }
 
 async function upsertForUser(userId: string, account: Account, interview: InterviewView) {
-  const saved = await readJson<{ id: string }>(eventPath(userId, interview.id))
+  const savedId = await existingEventId(userId, account, interview.id)
   const body = JSON.stringify(eventBody(interview))
-  if (saved?.id) {
+  if (savedId) {
+    const saved = { id: savedId }
     const updated = await calendarFetch(userId, account, `/calendars/primary/events/${encodeURIComponent(saved.id)}`, {
       method: 'PATCH',
       body,
     })
     if (updated.ok) {
+      await writeJson(eventPath(userId, interview.id), { id: saved.id })
       if (account.error) {
         account.error = null
         await writeAccount(userId, account)
@@ -369,16 +405,29 @@ export async function connectGoogle(user: UserRecord, code: string, redirectUri:
   } catch (error) {
     console.error(error)
   }
+  await syncUserCalendar(user)
+}
+
+export async function syncUserCalendar(user: UserRecord) {
+  if (!googleConfigured()) return null
+  const account = await readAccount(user.id)
+  if (!account) return null
   const interviews = await listInterviews(user)
+  let failure: string | null = null
   for (const interview of interviews) {
     try {
       await upsertForUser(user.id, account, interview)
     } catch (error) {
       console.error(error)
-      await rememberFailure(user.id, account, error)
-      break
+      failure = error instanceof Error ? error.message : 'Google Calendar could not be updated.'
     }
   }
+  if (failure) await rememberFailure(user.id, account, new Error(failure))
+  else if (account.error) {
+    account.error = null
+    await writeAccount(user.id, account)
+  }
+  return readAccount(user.id)
 }
 
 export async function disconnectGoogle(userId: string) {

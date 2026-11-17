@@ -1,5 +1,5 @@
 import { requireUser } from '@/lib/auth'
-import { disconnectGoogle, googleAccountStatus, googleConfigured, googleRedirectUri, requestOrigin } from '@/lib/google-calendar'
+import { disconnectGoogle, googleConfigured, googleRedirectUri, requestOrigin, syncUserCalendar } from '@/lib/google-calendar'
 import { fail, json } from '@/lib/http'
 import type { NextRequest } from 'next/server'
 
@@ -9,11 +9,13 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest) {
   try {
     const user = await requireUser(request)
-    const status = await googleAccountStatus(user.id)
+    const account = googleConfigured() ? await syncUserCalendar(user) : null
     return json({
       configured: googleConfigured(),
       redirectUri: googleRedirectUri(requestOrigin(request)),
-      ...status,
+      connected: Boolean(account),
+      email: account?.email ?? null,
+      error: account?.error ?? null,
     })
   } catch (error) {
     return fail(error)

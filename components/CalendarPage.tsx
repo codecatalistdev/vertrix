@@ -110,13 +110,18 @@ export function CalendarScreen() {
 
 function GoogleConnect() {
   const [connected, setConnected] = useState(false)
+  const [problem, setProblem] = useState('')
   const [busy, setBusy] = useState(false)
 
   function loadStatus() {
-    return api<{ connected: boolean }>('/api/calendar/google')
-      .then((data) => setConnected(data.connected))
+    return api<{ connected: boolean; error: string | null }>('/api/calendar/google')
+      .then((data) => {
+        setConnected(data.connected)
+        setProblem(data.error ?? '')
+      })
       .catch((caught) => {
         if (caught instanceof Error && caught.message === 'Sign in required.') return
+        setProblem(caught instanceof Error ? caught.message : 'Could not reach Google Calendar.')
       })
   }
 
@@ -146,6 +151,7 @@ function GoogleConnect() {
         <button className="btn btn-ghost" type="button" disabled={busy} onClick={() => void disconnect()}>
           {busy ? 'Disconnecting…' : 'Disconnect Google Calendar'}
         </button>
+        {problem ? <p className="form-error">{problem}</p> : null}
       </div>
     )
   }
