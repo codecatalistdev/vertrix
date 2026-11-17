@@ -17,18 +17,20 @@ async function dummyPasswordHash() {
 }
 
 export async function signSession(userId: string) {
+  const secret = getSessionSecret()
+  if (!secret) throw new HttpError(500, 'Sign-in is not configured. Set SESSION_SECRET in the environment.')
   const payload: Payload = { uid: userId, exp: Date.now() + 7 * 24 * 60 * 60 * 1000 }
   const body = Buffer.from(JSON.stringify(payload)).toString('base64url')
-  const secret = await getSessionSecret()
   const signature = createHmac('sha256', secret).update(body).digest('base64url')
   return `${body}.${signature}`
 }
 
 export async function readSession(token: string | undefined) {
   if (!token) return null
+  const secret = getSessionSecret()
+  if (!secret) return null
   const [body, signature] = token.split('.')
   if (!body || !signature) return null
-  const secret = await getSessionSecret()
   const expected = createHmac('sha256', secret).update(body).digest('base64url')
   const actualBuffer = Buffer.from(signature)
   const expectedBuffer = Buffer.from(expected)
