@@ -30,7 +30,7 @@ import { useDeskData } from './DeskData'
 import { IconChevron } from './icons'
 import { createDraft, Draft, editDraft, InterviewSheet } from './InterviewSheet'
 
-const HOUR = 64
+const HOUR = 48
 
 function MonthGrid({
   days,
@@ -334,7 +334,7 @@ function CalendarBoard() {
         ) : (
         <div className="cal-scroll" ref={scrollRef}>
           <div className="cal-head">
-            <div className="cal-corner">
+            <div className="time-head">
               <span>CET</span>
               <span>EST</span>
             </div>
@@ -351,8 +351,10 @@ function CalendarBoard() {
                 const labels = hourLabels(reference, hour)
                 return (
                   <div className="gutter-hour" key={hour}>
-                    <span className="cet">{labels.cet}</span>
-                    <span className="est">{labels.est}{labels.estWeekday ? ' · prev' : ''}</span>
+                    <span className="cet">{labels.cet.replace(':00', '')}</span>
+                    <span className="est" title={labels.estWeekday ? `EST is still ${labels.estWeekday}` : undefined}>
+                      {labels.est.replace(':00', '')}
+                    </span>
                   </div>
                 )
               })}
@@ -375,9 +377,6 @@ function CalendarBoard() {
                 >
                   {Array.from({ length: 24 }, (_, hour) => (
                     <div key={`h-${hour}`} className="hour-line" style={{ top: (hour + 1) * HOUR }} />
-                  ))}
-                  {Array.from({ length: 24 }, (_, hour) => (
-                    <div key={`m-${hour}`} className="hour-line half" style={{ top: hour * HOUR + HOUR / 2 }} />
                   ))}
                   {dayEvents.map((interview) => {
                     const spot = placed.get(interview.id) ?? { col: 0, cols: 1 }
