@@ -142,7 +142,7 @@ function Room({ id }: { id: string }) {
         <div className="room-heading">
           <div>
             <Link className="back-link" href="/">Back to calendar</Link>
-            <h1>{interview.title}</h1>
+            <h1>{interview.candidateName.trim() || interview.title}</h1>
           </div>
           <button className="btn btn-ghost" type="button" onClick={() => setMaterialsOpen(true)}>
             Materials

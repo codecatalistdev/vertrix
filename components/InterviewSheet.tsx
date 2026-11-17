@@ -15,6 +15,7 @@ import { IconClose } from './icons'
 export type Draft = {
   id?: string
   title: string
+  candidateName: string
   status: Status
   color: string
   interviewerId: string
@@ -41,6 +42,7 @@ export function createDraft(input: {
 }): Draft {
   return {
     title: '',
+    candidateName: '',
     status: 'scheduled',
     color: DEFAULT_COLOR,
     interviewerId: input.interviewerId ?? '',
@@ -62,6 +64,7 @@ export function editDraft(interview: InterviewView): Draft {
   return {
     id: interview.id,
     title: interview.title,
+    candidateName: interview.candidateName,
     status: interview.status,
     color: interview.color,
     interviewerId: interview.interviewerId,
@@ -138,6 +141,7 @@ export function InterviewSheet({
       const payload = canManage
         ? {
             title: draft.title,
+            candidateName: draft.candidateName,
             status: draft.status,
             color: draft.color,
             interviewerId: draft.interviewerId,
@@ -215,7 +219,7 @@ export function InterviewSheet({
         <header className="sheet-head">
           <div>
             <p className="eyebrow">{draft.id ? 'Interview' : 'New interview'}</p>
-            <h2 id="interview-title">{draft.id ? draft.title || 'Interview' : 'Assign interview'}</h2>
+            <h2 id="interview-title">{draft.id ? draft.candidateName || draft.title || 'Interview' : 'Assign interview'}</h2>
           </div>
           <button className="icon-btn" type="button" aria-label="Close" onClick={onClose}>
             <IconClose />
@@ -237,6 +241,10 @@ export function InterviewSheet({
           {error ? <div className="form-error" style={{ marginBottom: 14 }}>{error}</div> : null}
           {draft.createdByName ? <p className="help" style={{ marginBottom: 14 }}>Scheduled by {draft.createdByName}</p> : null}
           <div className="form-grid">
+            <label className="field span-2">
+              <span className="field-label">Candidate name</span>
+              <input className="input" value={draft.candidateName} disabled={!canManage} onChange={(event) => patch({ candidateName: event.target.value })} />
+            </label>
             <label className="field span-2">
               <span className="field-label">Title</span>
               <input className="input" value={draft.title} disabled={!canManage} onChange={(event) => patch({ title: event.target.value })} />

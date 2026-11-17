@@ -262,6 +262,7 @@ function eventBody(interview: InterviewView) {
     status === 'Scheduled' ? '' : status,
   ].filter(Boolean).join(' · ')
   const description = [
+    interview.candidateName.trim() ? `Candidate: ${interview.candidateName.trim()}` : '',
     `Result: ${status}`,
     `Proxy interviewer: ${interview.interviewerName}`,
     `CET: ${formatClock(range.start, CET_ZONE)}–${formatClock(range.end, CET_ZONE)}`,

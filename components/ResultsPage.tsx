@@ -20,7 +20,9 @@ export function ResultsScreen() {
 }
 
 function groupKey(interview: InterviewView) {
-  return interview.title.trim().toLowerCase() || interview.id
+  const candidate = interview.candidateName.trim().toLowerCase()
+  if (candidate) return `candidate:${candidate}`
+  return `title:${interview.title.trim().toLowerCase() || interview.id}`
 }
 
 function stageMap(items: InterviewView[]) {
@@ -83,7 +85,9 @@ function ResultsBoard() {
       .map((items) => {
         const sorted = [...items].sort((a, b) => b.date.localeCompare(a.date) || b.startMinutes - a.startMinutes)
         const cells = stageMap(sorted)
-        return { title: sorted[0]?.title || 'Untitled', items: sorted, cells, journey: journeyLabel(cells) }
+        const candidate = sorted.find((item) => item.candidateName.trim())?.candidateName.trim() || sorted[0]?.title || 'Untitled'
+        const interviewers = [...new Set(sorted.map((item) => item.interviewerName).filter(Boolean))]
+        return { title: candidate, interviewTitle: sorted[0]?.title || '', interviewers, items: sorted, cells, journey: journeyLabel(cells) }
       })
       .sort((a, b) => b.items[0].date.localeCompare(a.items[0].date) || b.items[0].startMinutes - a.items[0].startMinutes)
   }, [interviews, filter])
@@ -130,6 +134,7 @@ function ResultsBoard() {
           <thead>
             <tr>
               <th>Candidate</th>
+              {canManage ? <th>Interviewer</th> : null}
               {STEPS.map((step, index) => (
                 <th key={step.value}>{index + 1} · {step.label}</th>
               ))}
@@ -137,15 +142,17 @@ function ResultsBoard() {
           </thead>
           <tbody>
             {interviews === null ? (
-              <tr><td colSpan={STEPS.length + 1} className="empty">Loading results…</td></tr>
+              <tr><td colSpan={STEPS.length + (canManage ? 2 : 1)} className="empty">Loading results…</td></tr>
             ) : groups.length === 0 ? (
-              <tr><td colSpan={STEPS.length + 1} className="empty">{interviews.length === 0 ? 'No interviews yet.' : 'Nothing matches this result.'}</td></tr>
+              <tr><td colSpan={STEPS.length + (canManage ? 2 : 1)} className="empty">{interviews.length === 0 ? 'No interviews yet.' : 'Nothing matches this result.'}</td></tr>
             ) : groups.map((group) => (
-              <tr key={group.title.toLowerCase()}>
+              <tr key={group.items.map((item) => item.id).join('-')}>
                 <td>
                   <div className="person-name">{group.title}</div>
+                  {group.interviewTitle && group.interviewTitle !== group.title ? <div className="person-meta">{group.interviewTitle}</div> : null}
                   <div className={`journey ${group.journey.tone}`}>{group.journey.text}</div>
                 </td>
+                {canManage ? <td>{group.interviewers.join(', ') || '—'}</td> : null}
                 {STEPS.map((step) => {
                   const cell = group.cells.get(step.value)
                   const label = cell ? STATUSES.find((item) => item.value === cell.status)?.label ?? cell.status : ''

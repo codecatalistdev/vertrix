@@ -33,6 +33,7 @@ export type ResumeView = {
 export type Interview = {
   id: string
   title: string
+  candidateName: string
   status: Status
   color: string
   interviewerId: string

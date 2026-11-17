@@ -84,14 +84,14 @@ function MonthGrid({
                       background: hexToRgba(interview.color, 0.24),
                       ['--event-color' as string]: interview.color,
                     }}
-                    title={`${interview.title}\n${cet}\n${est}\n${interview.interviewerName}`}
+                    title={`${interview.candidateName.trim() || interview.title}${interview.candidateName.trim() && interview.candidateName.trim() !== interview.title ? `\n${interview.title}` : ''}\n${cet}\n${est}\n${interview.interviewerName}`}
                     onClick={(event) => {
                       event.stopPropagation()
                       onOpenInterview(interview)
                     }}
                   >
                     <span className="month-chip-time">{formatClock(range.start, CET_ZONE)}</span>
-                    <span className="month-chip-title">{interview.step ? `${stepLabel(interview.step)} · ` : ''}{interview.title}</span>
+                    <span className="month-chip-title">{interview.step ? `${stepLabel(interview.step)} · ` : ''}{interview.candidateName.trim() || interview.title}</span>
                     {result ? <span className={`result-mark result-${interview.status}`}>{result}</span> : null}
                   </button>
                 )
@@ -399,7 +399,7 @@ function CalendarBoard() {
                           background: hexToRgba(interview.color, 0.24),
                           ['--event-color' as string]: interview.color,
                         }}
-                        title={`${interview.title}\n${cet}\n${est}\n${interview.interviewerName}`}
+                        title={`${interview.candidateName.trim() || interview.title}${interview.candidateName.trim() && interview.candidateName.trim() !== interview.title ? `\n${interview.title}` : ''}\n${cet}\n${est}\n${interview.interviewerName}`}
                         onPointerDown={(event) => event.stopPropagation()}
                         onClick={() => setDraft(editDraft(interview))}
                         onKeyDown={(event) => {
@@ -407,7 +407,7 @@ function CalendarBoard() {
                         }}
                       >
                         <div className="event-time">{cet}{result ? <span className={`result-mark result-${interview.status}`}> · {result}</span> : null}</div>
-                        <div className="event-title">{interview.step ? `${stepLabel(interview.step)} · ` : ''}{interview.title}</div>
+                        <div className="event-title">{interview.step ? `${stepLabel(interview.step)} · ` : ''}{interview.candidateName.trim() || interview.title}</div>
                         {interview.durationMinutes >= 45 ? <div className="event-meta">{interview.interviewerName}</div> : null}
                         {showRoom ? (
                           <button

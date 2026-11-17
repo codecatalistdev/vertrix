@@ -147,7 +147,7 @@ function DashboardBoard() {
             <table className="status-table">
               <thead>
                 <tr>
-                  <th>Interview</th>
+                  <th>Candidate</th>
                   {canManage ? <th>Interviewer</th> : null}
                   <th>Date</th>
                   {STEPS.map((step) => <th key={step.value}>{step.label}</th>)}
@@ -156,7 +156,10 @@ function DashboardBoard() {
               <tbody>
                 {listed.map((interview) => (
                   <tr key={interview.id}>
-                    <td className="person-name">{interview.title}</td>
+                    <td>
+                      <div className="person-name">{interview.candidateName.trim() || interview.title}</div>
+                      {interview.candidateName.trim() && interview.candidateName.trim() !== interview.title ? <div className="person-meta">{interview.title}</div> : null}
+                    </td>
                     {canManage ? <td>{interview.interviewerName}</td> : null}
                     <td>{formatWeekday(interview.date)} {formatMonthDay(interview.date)}</td>
                     {STEPS.map((step) => (

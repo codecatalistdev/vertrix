@@ -67,6 +67,8 @@ type InterviewInput = Partial<Interview>
 export function normalizeInterview(input: InterviewInput, previousId: string | null, db: Database): Omit<Interview, 'id' | 'createdById' | 'createdAt' | 'updatedAt' | 'resume' | 'stepResults'> {
   const title = cleanText(input.title, 140)
   if (!title) throw new HttpError(400, 'Enter a title.')
+  const candidateName = cleanText(input.candidateName, 80)
+  if (candidateName.length < 2) throw new HttpError(400, 'Enter the candidate name.')
   const status = input.status
   if (!status || !STATUSES.has(status)) throw new HttpError(400, 'Choose a status.')
   const color = String(input.color ?? '').trim()
@@ -95,6 +97,7 @@ export function normalizeInterview(input: InterviewInput, previousId: string | n
   }
   return {
     title,
+    candidateName,
     status,
     color,
     interviewerId,

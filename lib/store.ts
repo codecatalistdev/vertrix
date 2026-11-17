@@ -118,6 +118,24 @@ function userFromRow(row: UserRow): UserRecord {
   }
 }
 
+function storedStep(step: string, results: Interview['stepResults'], candidateName: string) {
+  const encoded = encodeStep(step, results)
+  const name = candidateName.trim()
+  if (!name) return encoded
+  const withResults = encoded.includes('|') ? encoded : `${encoded}|`
+  return `${withResults}|${encodeURIComponent(name)}`
+}
+
+function candidateFromStep(raw: string) {
+  const pieces = String(raw ?? '').split('|')
+  if (pieces.length < 3) return ''
+  try {
+    return decodeURIComponent(pieces.slice(2).join('|'))
+  } catch {
+    return ''
+  }
+}
+
 function interviewFromRow(row: InterviewRow): Interview {
   const resume =
     row.resume_stored_name && row.resume_original_name && row.resume_mime && row.resume_size != null
@@ -132,6 +150,7 @@ function interviewFromRow(row: InterviewRow): Interview {
   return {
     id: row.id,
     title: row.title,
+    candidateName: candidateFromStep(row.step),
     status: displayedStatus(stage.step, stage.results, fromStoredStatus(row.status)),
     color: row.color,
     interviewerId: row.interviewer_id,
@@ -424,7 +443,7 @@ export async function createInterview(actor: UserRecord, input: Partial<Intervie
     date: fields.date,
     start_minutes: fields.startMinutes,
     duration_minutes: fields.durationMinutes,
-    step: encodeStep(fields.step, mergeStepResults(undefined, input.stepResults, fields.step, fields.status)),
+    step: storedStep(fields.step, mergeStepResults(undefined, input.stepResults, fields.step, fields.status), fields.candidateName),
     real_meeting_link: fields.realMeetingLink,
     support_meeting_link: fields.supportMeetingLink,
     jd_link: fields.jdLink,
@@ -456,7 +475,7 @@ export async function updateInterview(actor: UserRecord, id: string, input: Part
       date: next.date,
       start_minutes: next.startMinutes,
       duration_minutes: next.durationMinutes,
-      step: encodeStep(next.step, mergeStepResults(current.stepResults, input.stepResults, next.step, next.status)),
+      step: storedStep(next.step, mergeStepResults(current.stepResults, input.stepResults, next.step, next.status), next.candidateName),
       real_meeting_link: next.realMeetingLink,
       support_meeting_link: next.supportMeetingLink,
       jd_link: next.jdLink,
@@ -464,7 +483,7 @@ export async function updateInterview(actor: UserRecord, id: string, input: Part
       note: next.note,
     })
   } else {
-    const scheduleKeys = ['title', 'status', 'color', 'interviewerId', 'date', 'startMinutes', 'durationMinutes', 'step', 'jdLink', 'docLink', 'realMeetingLink'] as const
+    const scheduleKeys = ['title', 'candidateName', 'status', 'color', 'interviewerId', 'date', 'startMinutes', 'durationMinutes', 'step', 'jdLink', 'docLink', 'realMeetingLink'] as const
     for (const key of scheduleKeys) {
       if (key in input && String(input[key] ?? '') !== String(current[key] ?? '')) {
         throw new HttpError(403, 'You can update the support meeting link and the note.')
